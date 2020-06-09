@@ -1,5 +1,6 @@
 #!/bin/csh
 
+rm *_proj
 cp list list_tmp
 @ l = `cat list_tmp | wc -l`
 while ( $l > 0 )
@@ -11,3 +12,10 @@ while ( $l > 0 )
   mv html_tmp $state.html
   @ l = `cat list_tmp | wc -l`
 end
+
+mv *.png fig
+mv *.html html
+mv *_proj proj
+rm tmp*
+
+./summary.csh
