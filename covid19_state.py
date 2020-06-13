@@ -14,7 +14,7 @@ import os
 
 tmp = sys.argv
 state = tmp[1]
-#state = "US"
+#state = "FL"
 
 def get_DNC(state):
     if state == "US":
@@ -23,10 +23,10 @@ def get_DNC(state):
         response = requests.get("https://covidtracking.com/api/v1/states/daily.json")
     todos = json.loads(response.text)
 
-    counter,nbreak = 0,83
+    counter,nbreak = 0,90
     dates=[];pos=[];tot=[];dth=[];
     for todo in todos:
-        if (state == "US" or todo["state"]==state) and todo["date"]<20200608:
+        if (state == "US" or todo["state"]==state):# and todo["date"]<20200608:
             counter = counter + 1
             dates.append(todo["date"])
             pos.append(todo["positive"])
@@ -35,7 +35,7 @@ def get_DNC(state):
                 tot.append(todo["negative"]);#print todo["negative"]
             else:
                 tot.append(0)
-            if counter > nbreak: break # get at most 70 data points
+            if todo["date"]==20200317: break # get at most 70 data points
 
     date0 = dates[0]
     for i in range(len(dates)):
@@ -48,6 +48,16 @@ def get_DNC(state):
 #        dth[i] = dth[i] - dth[i+1]
 
     return dates,pos,tot,dth
+
+def read_states():
+    F = open("proj/US_proj_states","r")
+    data = [ line.split() for line in F]
+    date=[];pos=[];
+    for i in range(len(data)):
+        tmp = data[i]
+        date.append(datetime(int(tmp[0]),int(tmp[1]),int(tmp[2])))
+        pos.append(float(tmp[3]))
+    return date,pos
 
 def get_SD(state):
     F = open("data/US_AM","r")
@@ -182,7 +192,7 @@ def plot_regression(x_train,y_train,x_pred,predict):
     plt.savefig(state+'_Regression',dpi=150)
 
 # get pos, tot, date
-enddate = datetime(2020,8,1);
+enddate = datetime(2020,7,16);
 [dates,pos,tot,dth] = get_DNC(state)
 # generate pos_fit, tot_fit, remove excessive oscillation
 flagstop = False;navg=0;
@@ -226,7 +236,7 @@ for i in range(len(pos)):
     posavg[i] = numpy.average(pos_fit[max(0,i-n_avg/2):min(i+n_avg/2+1,len(pos))])
     totavg[i] = numpy.average(tot_fit[max(0,i-n_avg/2):min(i+n_avg/2+1,len(pos))])
     logpos[i] = numpy.log(posavg[i]);logtot[i] = numpy.log(totavg[i]);
-slope = [];slope0 = [];slope1 = [];lfit = 7;coef_tot = 0.25;
+slope = [];slope0 = [];slope1 = [];lfit = 14;coef_tot = 0.25;
 for i in range(ndays):
     cpos=numpy.polyfit(datefit[i:lfit+i],logpos[i:lfit+i],1);
     ctot=numpy.polyfit(datefit[i:lfit+i],logtot[i:lfit+i],1)
@@ -237,7 +247,8 @@ for i in range(ndays):
 slope_avg = [0]*len(slope);n_avg=1
 for i in range(len(slope)):
     slope_avg[i] = numpy.average(slope[i:min(i+n_avg,len(slope))])
-slope_avghat = savgol_filter(slope_avg,51,3,mode='mirror')
+slope_avghat = savgol_filter(slope_avg,31,3,mode='mirror')
+#slope_avghat = savgol_filter(slope_avg,31,3)
 plt.plot(dates[0:ndays],slope_avghat[0:ndays],'b');plt.plot(dates[0:ndays],slope_avg[0:ndays],'m');plt.plot(dates[0:ndays],slope0[0:ndays],'r');plt.plot(dates[0:ndays],slope1[0:ndays],'k');plt.grid(which='both');plt.xticks([datetime(2020,3,1),datetime(2020,3,16),datetime(2020,4,1),datetime(2020,4,16),datetime(2020,5,1),datetime(2020,5,16),datetime(2020,6,1)],['2020/3/1','2020/3/16','2020/4/1','2020/4/16','2020/5/1','2020/5/16','2020/6/1']);
 slope_avg = slope_avghat
 plt.close()
@@ -257,10 +268,11 @@ for i in range(len(ED0)):
     NE_avg[i] = numpy.average(NE[max(0,i-n_avg/2):min(i+n_avg/2+1,len(ED))])
     ED0_avg[i] = numpy.average(ED0[max(0,i-n_avg/2):min(i+n_avg/2+1,len(ED))])
     ED_avg[i] = numpy.average(ED[max(0,i-n_avg/2):min(i+n_avg/2+1,len(ED))])
+
 plt.plot(dates_SD,AM_avg,'k');plt.plot(dates_SD,NE_avg,'b');plt.plot(dates_SD,ED_avg,'g');plt.plot(dates_SD,ED0_avg,'r');plt.grid(which='both');plt.xticks([datetime(2020,3,1),datetime(2020,3,16),datetime(2020,4,1),datetime(2020,4,16),datetime(2020,5,1),datetime(2020,5,16),datetime(2020,6,1)],['2020/3/1','2020/3/16','2020/4/1','2020/4/16','2020/5/1','2020/5/16','2020/6/1']);
 plt.plot(ED0,'k');plt.plot(ED0_avg,'r');
 
-nshift = 27;
+nshift = 25;
 #if state=="LA" or state=="OK": nshift=20;
 #if state=="NY" or state=="MI": nshift=21;
 #if state=="UT" or state=="US": nshift=22;
@@ -280,7 +292,7 @@ for dday in range(nshift,nshift+1):
         x.append(slope_avg[p1])
         y.append(ED_avg[p2])
         p1 = p1 + 1;p2 = p2 - 1
-        if p2 == 0: break
+        if p2 == 0 or dates[p1]==datetime(2020,04,05): break
     for i in range(len(ED0)):
         if dates_SD[i]+day*dday not in dates:
             SLP_SD.append([0, AM_avg[i],NE_avg[i],ED_avg[i],dates_SD[i]+day*dday])
@@ -334,16 +346,23 @@ len(dates)
 len(pos)
 plot_proj(dates,pos,posavg,dates_pred,enddate)
 plt.close()
-
 F = open(state+"_proj","w")
 for i in range(len(posavg),len(pos)):
     F.write(str(dates[i].year)+' '+str(dates[i].month)+' '+str(dates[i].day)+' ');
     F.write(str(pos[i])+'\n')
 
 if state=="US":
+    [dates_state,pos_state] = read_states()
+    for p1 in range(len(dates_state)):
+        for i in range(len(dates)):
+            if dates[i]==dates_state[p1]: break
+        pos[i]=pos_state[p1]
+    plot_proj(dates,pos,posavg,dates_pred,enddate)
+    plt.close()
+
     datesJHU = [];dth=[]
     date =datetime(2020,4,12)
-    while date <= dates[0]:
+    while date < dates[0]:
         day = date.day;month=date.month
         if day < 10: day = '0'+str(day)
         day = str(day)
@@ -373,6 +392,7 @@ if state=="US":
     plt.xlim([datetime(2020,04,20),datesJHU[-1]+timedelta(days = 1)])
     plt.tight_layout()
     plt.savefig('US_Death_Projection',dpi=150)
+    plt.close()
 
     F = open("US_death_proj","w")
     for i in range(len(dth)):
