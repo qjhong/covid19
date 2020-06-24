@@ -7,6 +7,7 @@ from datetime import datetime
 from datetime import timedelta
 import numpy
 from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import GradientBoostingRegressor
 import math
 import sys
 from scipy.signal import savgol_filter
@@ -14,7 +15,7 @@ import os
 
 tmp = sys.argv
 state = tmp[1]
-#state = "FL"
+#state = "NC"
 
 def get_DNC(state):
     if state == "US":
@@ -26,7 +27,7 @@ def get_DNC(state):
     counter,nbreak = 0,90
     dates=[];pos=[];tot=[];dth=[];
     for todo in todos:
-        if (state == "US" or todo["state"]==state):# and todo["date"]<20200608:
+        if (state == "US" or todo["state"]==state): # and todo["date"]<20200608:
             counter = counter + 1
             dates.append(todo["date"])
             pos.append(todo["positive"])
@@ -52,12 +53,14 @@ def get_DNC(state):
 def read_states():
     F = open("proj/US_proj_states","r")
     data = [ line.split() for line in F]
-    date=[];pos=[];
+    date=[];pos=[];pos_l=[];pos_h=[];
     for i in range(len(data)):
         tmp = data[i]
         date.append(datetime(int(tmp[0]),int(tmp[1]),int(tmp[2])))
         pos.append(float(tmp[3]))
-    return date,pos
+        pos_l.append(float(tmp[4]))
+        pos_h.append(float(tmp[5]))
+    return date,pos,pos_l,pos_h
 
 def get_SD(state):
     F = open("data/US_AM","r")
@@ -104,8 +107,8 @@ def plot_DNC(dates,pos,tot):
         totfit[i]= numpy.exp(ctot[0]*datefit[i] + ctot[1])
     plt.semilogy(dates[:-2],pos[:-2],'r');plt.semilogy(dates[:-2],tot[:-2],'k')
     plt.semilogy(dates[0:lfit],totfit[0:lfit],':k');plt.semilogy(dates[0:lfit],posfit[0:lfit],':r')
-    plt.text(dates[18],min(pos[0:10])/2.2,"Trend: "+str(format(-cpos[0]*100, '.2f'))+"% per day")
-    plt.text(dates[18],min(tot[0:10])/2.2,"Trend: "+str(format(-ctot[0]*100, '.2f'))+"% per day")
+    plt.text(dates[28],min(pos[0:10])*1.2,"Trend: "+str(format(-cpos[0]*100, '.2f'))+"% per day")
+    plt.text(dates[28],min(tot[0:10])/1.8,"Trend: "+str(format(-ctot[0]*100, '.2f'))+"% per day")
     plt.xlim([datetime(2020,03,20),dates[0]]);plt.ylim([min(pos[0:70])*0.9,max(tot)*1.1])
     plt.text(dates[45],max(tot)/2,state,fontsize=20)
     plt.xticks([datetime(2020,3,16),datetime(2020,4,1),datetime(2020,4,16),datetime(2020,5,1),datetime(2020,5,16),datetime(2020,6,1)],['2020/3/16','2020/4/1','2020/4/16','2020/5/1','2020/5/16','2020/6/1'])
@@ -125,30 +128,54 @@ def plot_PR(dates,pos,tot):
     plt.ylim([0,0.5])
     #plt.savefig(state+'_PositiveRatio',dpi=150)
 
-def plot_proj(dates,pos,posavg,dates_proj,enddate):
+def plot_proj(dates,pos,posavg,dates_proj,enddate,pos_l,pos_h,date_past,pos_past,pos_l_past,pos_h_past,state):
+    pos_l2 = [pos_l[i] for i in range(len(pos_l))]
+    pos_h2 = [pos_l[i] for i in range(len(pos_h))]
     for i in range(len(posavg),len(pos)):
         if dates[i]<=dates_proj[-1]: idx = i
     plt.plot(dates[len(posavg):idx+1],pos[len(posavg):idx+1],'.r');
     plt.plot(dates[idx+1:len(pos)],pos[idx+1:len(pos)],'.m');
     plt.plot(dates[0:len(posavg)],pos[0:len(posavg)],'+k');
     plt.plot(dates[0:len(posavg)],posavg,'k');
+    if state=='US':
+        for i in range(len(posavg),len(pos)): pos_l2[i] = pos[i] - (pos[i]-pos_l[i])/numpy.sqrt(3.0)
+        for i in range(len(posavg),len(pos)): pos_h2[i] = pos[i] + (pos_h[i]-pos[i])/numpy.sqrt(3.0)
+    plt.plot(dates[len(posavg):idx+1],pos_l2[len(posavg):idx+1],':r'); 
+    plt.plot(dates[len(posavg):idx+1],pos_l[len(posavg):idx+1],'r'); 
+    plt.plot(date_past,pos_past,'--',color=(1,0.7,0.7));
+    plt.plot(dates[idx+1:len(pos)],pos_l[idx+1:len(pos)],'m');
+    plt.plot(dates[idx+1:len(pos)],pos_l2[idx+1:len(pos)],':m');
+    plt.plot(dates[len(posavg):idx+1],pos_h[len(posavg):idx+1],'r');
+    plt.plot(dates[len(posavg):idx+1],pos_h2[len(posavg):idx+1],':r'); 
+    plt.plot(dates[idx+1:len(pos)],pos_h[idx+1:len(pos)],'m');
+    plt.plot(dates[idx+1:len(pos)],pos_h2[idx+1:len(pos)],':m');
+    plt.plot(date_past,pos_past,'--',color=(1,0.7,0.7));
+    plt.plot(date_past,pos_l_past,'--',color=(1,0.7,0.7));
+    plt.plot(date_past,pos_h_past,'--',color=(1,0.7,0.7));
+#    for i in range(len(posavg),idx+1):
+#        plt.plot([dates[i],dates[i]],[pos_l[i],pos_h[i]],'.r');
+#    for i in range(idx+1,len(pos)):
+#        plt.plot([dates[i],dates[i]],[pos_l[i],pos_h[i]],'.m');
     if enddate > datetime(2020,7,31):
         plt.xticks([datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1),datetime(2020,8,1)],['2020/5/1','2020/6/1','2020/7/1','2020/8/1'])
     else:
         plt.xticks([datetime(2020,3,1),datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1)],['2020/3/1','2020/4/1','2020/5/1','2020/6/1','2020/7/1'])
     plt.xlabel('Date');plt.ylabel('Daily New Cases');plt.grid(which='both')
-    plt.legend(['Projection','Projection (extended)','Daily New Cases','Past 7-day Average'])
-    plt.text(dates[35],max(pos)/1.1,state,fontsize=20)
+    plt.legend(['Projection','Projection (extended)','Daily New Cases','7-day Average','95% Confidence Interval (Statistical)','95% Confidence Interval (incl. Method Error)','Projection Made 2 Weeks Ago'])
+    #plt.legend(['Projection','Daily New Cases','7-day Average','95% Confidence Interval (Statistical)','95% Confidence Interval (incl. Method Error)','Projection Made 2 Weeks Ago'])
+    plt.text(dates[25],max(pos)/1.1,state,fontsize=20)
+    plt.ylim([0,max(pos)*1.2])
     plt.tight_layout()
     plt.savefig(state+'_Projection',dpi=150)
 
-def plot_R_D(SLP_SD):
+def plot_R_D(SLP_SD,std):
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
     for i in range(len(SLP_SD)):
         ax2.plot(SLP_SD[i][4],SLP_SD[i][3],'.k')
         if SLP_SD[i][4] in dates:
-            ax1.plot(SLP_SD[i][4],SLP_SD[i][0]+1,'.r');#plt.grid(which='both');plt.xticks([datetime(2020,3,1),datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1)],['2020/3/1','2020/4/1','2020/5/1','2020/6/1'])
+            ax1.plot(SLP_SD[i][4],SLP_SD[i][0]+1,'.r');
+            ax1.plot([SLP_SD[i][4],SLP_SD[i][4]],[SLP_SD[i][0]+1+std[i],SLP_SD[i][0]+1-std[i]],'r')#plt.grid(which='both');plt.xticks([datetime(2020,3,1),datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1)],['2020/3/1','2020/4/1','2020/5/1','2020/6/1'])
         #else:
             #ax2.plot(SLP_SD[i][4],SLP_SD[i][0],'+k');#plt.grid(which='both');plt.xticks([datetime(2020,3,1),datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1)],['2020/3/1','2020/4/1','2020/5/1','2020/6/1'])
     #ax1.xticks([datetime(2020,3,1),datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1)],['2020/3/1','2020/4/1','2020/5/1','2020/6/1'])
@@ -160,18 +187,21 @@ def plot_R_D(SLP_SD):
     #ax1.tight_layout()
     fig.savefig(state+'_R_D'+'_0',dpi=150)
 
-def plot_R_D_proj(SLP_SD,predict,dates_pred,nshift):
+def plot_R_D_proj(SLP_SD,predict,dates_pred,nshift,std):
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
     ymax = 0
+    std0 = numpy.mean(std[:10])
     for i in range(len(SLP_SD)):
         ax2.plot(SLP_SD[i][4],SLP_SD[i][3],'.k')
         if SLP_SD[i][3]>ymax: ymax = SLP_SD[i][3]
         if SLP_SD[i][4] in dates:
             ax1.plot(SLP_SD[i][4],SLP_SD[i][0]+1,'.r');#plt.grid(which='both');plt.xticks([datetime(2020,3,1),datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1)],['2020/3/1','2020/4/1','2020/5/1','2020/6/1'])
+            ax1.plot([SLP_SD[i][4],SLP_SD[i][4]],[SLP_SD[i][0]+1+std[i],SLP_SD[i][0]+1-std[i]],'r')#plt.grid(which='both');plt.xticks([datetime(2020,3,1),datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1)],['2020/3/1','2020/4/1','2020/5/1','2020/6/1'])
         else:
             d = dates_pred.index(SLP_SD[i][4])
             ax1.plot(SLP_SD[i][4],predict[d]+1,'+r');
+            ax1.plot([SLP_SD[i][4],SLP_SD[i][4]],[predict[d]+1+std0,predict[d]+1-std0],'r')#plt.grid(which='both');plt.xticks([datetime(2020,3,1),datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1)],['2020/3/1','2020/4/1','2020/5/1','2020/6/1'])
     ax1.set_xlabel('Date')
     ax1.set_ylabel('Reproductive Number R_d, Daily', color='r')
     ax1.tick_params(axis='y', labelcolor='r')
@@ -192,7 +222,7 @@ def plot_regression(x_train,y_train,x_pred,predict):
     plt.savefig(state+'_Regression',dpi=150)
 
 # get pos, tot, date
-enddate = datetime(2020,7,16);
+enddate = datetime(2020,7,14);
 [dates,pos,tot,dth] = get_DNC(state)
 # generate pos_fit, tot_fit, remove excessive oscillation
 flagstop = False;navg=0;
@@ -219,9 +249,9 @@ pos_fit=[0]*len(pos);tot_fit=[0]*len(pos);
 for i in range(len(pos)-1): pos_fit[i] = pos_tmp[i];tot_fit[i] = tot_tmp[i];
 #change pos,tot to 3-day average
 for i in range(len(pos)-1):
-    tot_tmp[i] = numpy.mean(tot[max(i-1,0):min(i+2,len(tot))])
+    if state != 'US': tot_tmp[i] = numpy.mean(tot[max(i-1,0):min(i+2,len(tot))])
 for i in range(len(pos)-1):
-    pos_tmp[i] = numpy.mean(pos[max(i-1,0):min(i+2,len(tot))])
+    if state != 'US': pos_tmp[i] = numpy.mean(pos[max(i-1,0):min(i+2,len(tot))])
 for i in range(len(pos)-1): pos[i] = pos_tmp[i];tot[i] = tot_tmp[i];
 
 plot_DNC(dates,pos,tot)
@@ -245,16 +275,19 @@ for i in range(ndays):
     if i == 0: pos0 = numpy.exp(cpos[1])
 
 slope_avg = [0]*len(slope);n_avg=1
+std = [0]*len(slope);n_std=14;
 for i in range(len(slope)):
     slope_avg[i] = numpy.average(slope[i:min(i+n_avg,len(slope))])
+    std[i] = numpy.std(slope[i:min(i+n_std,len(slope))])
 slope_avghat = savgol_filter(slope_avg,31,3,mode='mirror')
 #slope_avghat = savgol_filter(slope_avg,31,3)
 plt.plot(dates[0:ndays],slope_avghat[0:ndays],'b');plt.plot(dates[0:ndays],slope_avg[0:ndays],'m');plt.plot(dates[0:ndays],slope0[0:ndays],'r');plt.plot(dates[0:ndays],slope1[0:ndays],'k');plt.grid(which='both');plt.xticks([datetime(2020,3,1),datetime(2020,3,16),datetime(2020,4,1),datetime(2020,4,16),datetime(2020,5,1),datetime(2020,5,16),datetime(2020,6,1)],['2020/3/1','2020/3/16','2020/4/1','2020/4/16','2020/5/1','2020/5/16','2020/6/1']);
 slope_avg = slope_avghat
 plt.close()
+#plt.plot(dates[0:ndays],std[0:ndays],'b')
 
 [AM,NE,ED0] = get_SD(state)# len(dates) == len(pos) # len(dates_SD) == len(AM)
-dn = datetime(2020,5,31);day = timedelta(days = 1);dates_SD = [];l=len(ED0)
+dn = datetime(2020,6,14);day = timedelta(days = 1);dates_SD = [];l=len(ED0)
 for i in range(l): dates_SD.append(dn-day*(l-i-1))
 AM_avg=[0]*l;NE_avg=[0]*l;ED_avg=[0]*l;ED0_avg=[0]*l;ED=[0]*l;n_avg = 7;
 for i in range(len(ED0)): #ED[i] = ED0[i]
@@ -307,57 +340,96 @@ for i in range(len(SLP_SD)):
     else:
         dates_pred.append(SLP_SD[i][4])
         x_pred.append([SLP_SD[i][3]])
-plot_R_D(SLP_SD)
+plot_R_D(SLP_SD,std)
 plt.close()
 plt.close()
 
 bdt = LinearRegression()
 bdt.fit(x_train, y_train, weight);
+y_pred = bdt.predict(x_train)
+err = [y_pred[i]-y_train[i] for i in range(len(y_train))]
 print bdt.score(x_train,y_train)
 predict = bdt.predict(x_pred)
+if state == 'AZ':
+    for i in range(len(predict)):
+        predict[i] = (predict[i]+0.01)/2.0 
 
 plot_regression(x_train,y_train,x_pred,predict)
 plt.close()
 
-plot_R_D_proj(SLP_SD,predict,dates_pred,nshift)
+std0=numpy.mean(std[:10])
+stderr = numpy.linalg.norm(err)/numpy.sqrt(len(y_train))
+print stderr,std0,numpy.mean(err),numpy.linalg.norm(err)/numpy.sqrt(len(y_train))
+plot_R_D_proj(SLP_SD,predict,dates_pred,nshift,std)
 plt.close()
 
+err2 = y_train[0]-y_pred[0]
+print y_train[0],y_pred[0]
+std0 = numpy.sqrt(stderr*stderr+std0*std0+err2*err2)
+print std0
 adj_tot = numpy.average(slope1[0:7])*coef_tot
+pos_l = [pos[i] for i in range(len(pos))]
+pos_h = [pos[i] for i in range(len(pos))]
 print adj_tot
-flag_first = True
+flag_first = True;f = 1.0; f=2.0
 for i in range(len(dates_pred)):
     if dates_pred[i] not in dates:
         if flag_first:
             flag_first = False
             pos_now = pos0 * (predict[i]+adj_tot+1)
+            pos_now_l = pos0 * (predict[i]+adj_tot+1-std0*f)
+            pos_now_h = pos0 * (predict[i]+adj_tot+1+std0*f)
         else:
             pos_now = pos[dates.index(dates_pred[i]-day)] * (predict[i]+adj_tot+1)
+            pos_now_l = pos_l[dates.index(dates_pred[i]-day)] * (predict[i]+adj_tot+1-std0*f)
+            pos_now_h = pos_h[dates.index(dates_pred[i]-day)] * (predict[i]+adj_tot+1+std0*f)
         dates.append(dates_pred[i])
         pos.append(pos_now)
+        pos_l.append(pos_now_l)
+        pos_h.append(pos_now_h)
 
 dates_add = dates_pred[-1] + day
 while dates_add < enddate:
     dates.append(dates_add)
     pos_now = pos[-1] * (predict[-1]+adj_tot+1)
+    pos_now_l = pos_l[-1] * (predict[-1]+adj_tot+1-std0*f)
+    pos_now_h = pos_h[-1] * (predict[-1]+adj_tot+1+std0*f)
     pos.append(pos_now)
+    pos_l.append(pos_now_l)
+    pos_h.append(pos_now_h)
     dates_add = dates_add + day
 
 len(dates)
 len(pos)
-plot_proj(dates,pos,posavg,dates_pred,enddate)
+F = open("proj_Jun07/"+state+"_proj","r")
+data = [ line.split() for line in F]
+date_past=[];pos_past=[];pos_l_past=[];pos_h_past=[];
+for i in range(len(data)):
+    tmp = data[i]
+    date_past.append(datetime(int(tmp[0]),int(tmp[1]),int(tmp[2])))
+    pos_past.append(float(tmp[3]))
+    pos_l_past.append(float(tmp[4]))
+    pos_h_past.append(float(tmp[5]))
+    if state == "US":
+        pos_l_past[-1] = pos_past[-1] - pos_l_past[-1]
+        pos_h_past[-1] = pos_past[-1] + pos_h_past[-1]
+plot_proj(dates,pos,posavg,dates_pred,enddate,pos_l,pos_h,date_past,pos_past,pos_l_past,pos_h_past,state)
+if state == 'US': plt.savefig(state+'_Projection0',dpi=150)
 plt.close()
 F = open(state+"_proj","w")
 for i in range(len(posavg),len(pos)):
     F.write(str(dates[i].year)+' '+str(dates[i].month)+' '+str(dates[i].day)+' ');
-    F.write(str(pos[i])+'\n')
+    F.write(str(pos[i])+' '+str(pos_l[i])+' '+str(pos_h[i])+'\n')
 
 if state=="US":
-    [dates_state,pos_state] = read_states()
+    [dates_state,pos_state,pos_state_l,pos_state_h] = read_states()
     for p1 in range(len(dates_state)):
         for i in range(len(dates)):
             if dates[i]==dates_state[p1]: break
         pos[i]=pos_state[p1]
-    plot_proj(dates,pos,posavg,dates_pred,enddate)
+        pos_l[i]=pos_state[p1]-pos_state_l[p1]
+        pos_h[i]=pos_state[p1]+pos_state_h[p1]
+    plot_proj(dates,pos,posavg,dates_pred,enddate,pos_l,pos_h,date_past,pos_past,pos_l_past,pos_h_past,state)
     plt.close()
 
     datesJHU = [];dth=[]
@@ -375,9 +447,12 @@ if state=="US":
         datesJHU.append(date)
         dth.append(death)
         date = date + timedelta(days = 1)
-    while date < enddate:
+    while date < enddate+timedelta(days = 1)*15:
         datesJHU.append(date)
-        death = dth[-1]+ pos[dates.index(date-7*timedelta(days = 1))]*0.045
+        if date-7*timedelta(days = 1) in dates:
+            death = dth[-1]+ pos[dates.index(date-7*timedelta(days = 1))]*0.035
+        else:
+            death = dth[-1]+ pos[-1]*0.035
         dth.append(death)
         date = date + timedelta(days = 1)
 

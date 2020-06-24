@@ -19,3 +19,5 @@ mv *_proj proj
 rm tmp*
 
 ./summary.csh
+
+rm list_tmp*
