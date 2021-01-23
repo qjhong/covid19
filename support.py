@@ -27,7 +27,7 @@ def get_DNC(state):
     counter = 0
     dates=[];pos=[];tot=[];dth=[];
     for todo in todos:
-        if (state == "US" or todo["state"]==state) and todo["date"]<20210109:
+        if (state == "US" or todo["state"]==state) and todo["date"]<20210119:
             counter = counter + 1
             dates.append(todo["date"])
             pos.append(todo["positive"])
@@ -163,7 +163,7 @@ def plot_proj_US(dates,pos,posavg,dates_proj,enddate,pos_l,pos_h,date_past,pos_p
     #plt.legend(['Projection','Projection (extended)','Daily New Cases','7-day Average','95% Confidence Interval','95% Confidence Interval (incl. Method Error)','Projection Made 2 Weeks Ago'])
     #plt.legend(['Projection','Daily New Cases','7-day Average','95% Confidence Interval (Statistical)','95% Confidence Interval (incl. Method Error)','Projection Made 2 Weeks Ago'])
     plt.text(dates[40],max(pos[:-1])/1.1,state,fontsize=20)
-    plt.ylim([0,250001])
+    plt.ylim([0,300001])
     plt.tight_layout()
     plt.savefig(state+'_Projection',dpi=150)
 
@@ -546,7 +546,7 @@ def prepare_data(state,nshift,coef_tot,enddate):
             x_tmp.append(awareness)
             #x_tmp.append( abs( (date0-datetime(2020,9,15)) / timedelta(days=1) ) * 0.)
             if date0 > datetime(2020,8,25):
-                x_tmp.append( min( 0, numpy.sin( (date0-datetime(2020,10,25)) / timedelta(days=1) / 60. * 3.14 / 2 ) ) * flag_weather)
+                x_tmp.append( numpy.sin( (date0-datetime(2020,10,25)) / timedelta(days=1) / 60. * 3.14 / 2 ) * flag_weather)
                 #x_tmp.append( ( (date0-datetime(2020,10,25)) / timedelta(days=1) / 60. / 2. ) * 1.)
             else:
                 x_tmp.append( -numpy.sin( (date0-datetime(2020,4,25)) / timedelta(days=1) / 120. * 3.14 / 2 ) * flag_weather)
