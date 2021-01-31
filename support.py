@@ -27,16 +27,20 @@ def get_DNC(state):
     counter = 0
     dates=[];pos=[];tot=[];dth=[];
     for todo in todos:
-        if (state == "US" or todo["state"]==state) and todo["date"]<20210119:
+        if (state == "US" or todo["state"]==state) and todo["date"]<20210131:
+            #print(todo)
             counter = counter + 1
             dates.append(todo["date"])
             pos.append(todo["positive"])
             dth.append(todo["death"])
-            if 'negative' in todo and todo["negative"] is not None:
+            if state == 'OR' and todo["totalTestResults"] is not None:
+                tot.append(todo["totalTestResults"]);#print todo["negative"]
+            elif 'negative' in todo and todo["negative"] is not None:
                 tot.append(todo["negative"]);#print todo["negative"]
             else:
                 tot.append(0)
             if todo["date"]==20200316: break # get at most 70 data points
+            #print( todo["negative"] )
 
     for i in range(len(dates)):
         date = dates[i]
@@ -97,7 +101,8 @@ def plot_DNC(dates,pos,tot,state):
     logpos = [0]*len(pos);logtot = [0]*len(pos)
     for i in range(len(pos)-1):
         logpos[i] = numpy.log(pos[i])
-        if tot[i]<0: tot[i] = tot[i-1]
+        if tot[i]<=0: tot[i] = tot[i-1]
+        #print(tot[i])
         logtot[i] = numpy.log(tot[i])
 
     lfit = 16;

@@ -31,7 +31,7 @@ else:
     states = [state]
     n_states = 1
 #states = ['AK', 'AL']
-enddate = datetime(2021,2,20);
+enddate = datetime(2021,3,31);
 nshift=25;
 coef_tot = 0.25;
 day = timedelta(days = 1)
@@ -146,7 +146,7 @@ for state in states:
     std0 = numpy.sqrt(stderr*stderr+std0*std0)#+err2*err2)
     print(std0)
     #adj_tot = numpy.average(slope1[0:7])*coef_tot - max(0,y_pred[0] - y_train[0]) - max(0,(y_train[14]-y_train[0])/4)
-    adj_tot = min(0.001,numpy.average(slope1[0:7])*coef_tot) - max(0,(numpy.mean(y_pred[0:5]) - y_train0[-1]))*0.99 - min(0,(max( numpy.mean(y_pred[0:10]), numpy.mean(y_pred[0:20]) ) - y_train0[-1]))*0.00 - 0.*max(0,(y_train0[-14]-y_train0[-1])/4)
+    adj_tot = min(0.001,numpy.average(slope1[0:7])*coef_tot) - max(0,(numpy.mean(y_pred[0:5]) - y_train0[-1]))*0.00 - min(0,(max( numpy.mean(y_pred[0:10]), numpy.mean(y_pred[0:20]) ) - y_train0[-1]))*0.00 - 0.*max(0,(y_train0[-14]-y_train0[-1])/4)
     print('Today\'s R (predicted) and yesterday\'s R (actual): ',y_pred[0]+1.,y_train0[-1]+1.)
     #if y_train0[0] > 0: adj_tot -= max(0,(y_train0[14]-y_train0[0])/4)
     #adj_tot = numpy.average(slope1[0:7])*coef_tot
@@ -336,7 +336,7 @@ for state in states:
         len(pos_poisson)
         len(pos_poisson_long)
         fatality_rate_poisson=[]
-        x_fit_poisson=[];y_fit_poisson=[];dates_fit_poisson=[];day_fit=185;nday=10;
+        x_fit_poisson=[];y_fit_poisson=[];dates_fit_poisson=[];day_fit=90;nday=10;
         if True:
             for i in range(nday,len(datesJHU)):
                 #print datesJHU[i],(dth[i]-dth[i-7]),pos_poisson[i-nday]
@@ -460,7 +460,7 @@ for state in states:
             dthavg[i] = numpy.average(dthdaily[max(0,i-n_avg+1):min(i+1,len(dth))])
         if True:
             date_proj = datetime(2020,7,20)
-            while date_proj < datetime(2020,12,24):
+            while date_proj < datetime(2021,1,24):
                 date_proj_tmp = date_proj
                 while True:
                     date = str(date_proj_tmp.year)+'-'
@@ -570,7 +570,7 @@ for state in states:
                 pos_out += pos[idx2]
                 pos_l_out += pos_l[idx2]
                 pos_h_out += pos_h[idx2]
-            if datesJHU[i].month==1 and datesJHU[i].day%7 == 2 and datesJHU[i].day > 16 or datesJHU[i].month==2 and datesJHU[i].day%7 == 6 or datesJHU[i].month==3 and datesJHU[i].day%7 == 6:
+            if datesJHU[i].month==1 and datesJHU[i].day%7 == 2 and datesJHU[i].day > 23 or datesJHU[i].month==2 and datesJHU[i].day%7 == 6 or datesJHU[i].month==3 and datesJHU[i].day%7 == 6:
                 count+=1
                 out2 = out+str(count)+' wk ahead cum death,'
                 date = str(datesJHU[i].year)+'-'
