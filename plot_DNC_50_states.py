@@ -3,7 +3,7 @@ plt.rcParams["font.family"] = "Times New Roman"
 from datetime import datetime
 from datetime import timedelta
 import numpy
-from support import get_DNC
+from support import get_DNC,get_DNC_JHU
 import os
 
 states = ['AK', 'WA', 'ID', 'MT', 'ND', 'MN', 'WI', 'VT', 'NH', 'ME', \
@@ -19,7 +19,15 @@ fs = 8
 
 #for j in range(len(states)):
 for j in range(50):
-    [dates,pos,tot,dth] = get_DNC(states[j])
+    state = states[j]
+    [dates0,pos0,tot0,dth0] = get_DNC(state)
+    [dates1,pos1,tot1,dth1] = get_DNC_JHU(state)
+    dates = dates1 + dates0
+    #print(dates)
+    pos = pos1 + pos0
+    tot = tot1 + tot0
+    dth = dth1 + dth0
+
     # generate pos_fit, tot_fit, remove excessive oscillation
     flagstop = False;navg=0;
     epsilon = 1.e-8
@@ -71,7 +79,7 @@ for j in range(50):
     plt.plot(dates[:-2],posavg[:-2],'k')
     plt.xticks([],[])
     plt.yticks([],[])
-    os.chdir("/Users/qijunhong/Documents/MATLAB/Finance/covid19/state")
+    #os.chdir("/Users/qijunhong/Documents/MATLAB/Finance/covid19/state")
     f = open(states[j], 'w')
     for i in range(len(pos)-2):
         f.write("%i %i\n" % (sum(pos[i:]),sum(tot[i:])))

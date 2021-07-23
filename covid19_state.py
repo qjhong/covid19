@@ -25,13 +25,13 @@ if state == 'all':
               'MD', 'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NC', 'ND', 'NE', \
               'NH', 'NJ', 'NM', 'NV', 'NY', 'OH', 'OK', 'OR', 'PA', 'RI', \
               'SC', 'SD', 'TN', 'TX', 'UT', 'VA', 'VT', 'WA', 'WI', 'WV', \
-              'WY', 'US'] 
-    n_states = 52
+              'WY'] 
+    n_states = 51
 else:
     states = [state]
     n_states = 1
 #states = ['AK', 'AL']
-enddate = datetime(2021,3,31);
+enddate = datetime(2021,9,22);
 nshift=25;
 coef_tot = 0.25;
 day = timedelta(days = 1)
@@ -50,7 +50,7 @@ l_train = len(X_train)
 l_pred = len(X_pred)
 X_data = X_train + X_pred
 X_df = pd.DataFrame(X_data)
-X_df.columns = ['mobility','R 60d','R 30d','R 1d','DNC','awareness','weather','state']
+X_df.columns = ['mobility','R 60d','R 30d','R 1d','DNC','awareness','weather','vac_effect','state']
 US_aware = X_df.loc[X_df['state']=='US']['awareness']
 US_aware.head()
 US_aware_merge = pd.concat([US_aware]*n_states, ignore_index=True)
@@ -97,7 +97,7 @@ Y_pred = bdt.predict(x_pred)
 Y_df = pd.concat([pd.DataFrame(Y_train), pd.DataFrame(Y_pred)], axis=0)
 Y_df.reset_index(drop=True, inplace=True)
 XY_df = pd.concat([X_df, Y_df], axis=1)
-XY_df.columns = ['awareness US','mobil','rep_30_days_ago','rep_45_days_ago','rep_60_days_ago','DNC','awareness','weather','state','rep_actual_or_predicted']
+XY_df.columns = ['awareness US','mobil','rep_30_days_ago','rep_45_days_ago','rep_60_days_ago','DNC','awareness','weather','vac_effect','state','rep_actual_or_predicted']
 #date0 = SLP_SD[0][4]
 #for i in range(len(x_pred)):
 #    x_pred_curr = x_pred[i,:].reshape(1,6)
@@ -146,7 +146,7 @@ for state in states:
     std0 = numpy.sqrt(stderr*stderr+std0*std0)#+err2*err2)
     print(std0)
     #adj_tot = numpy.average(slope1[0:7])*coef_tot - max(0,y_pred[0] - y_train[0]) - max(0,(y_train[14]-y_train[0])/4)
-    adj_tot = min(0.001,numpy.average(slope1[0:7])*coef_tot) - max(0,(numpy.mean(y_pred[0:5]) - y_train0[-1]))*0.00 - min(0,(max( numpy.mean(y_pred[0:10]), numpy.mean(y_pred[0:20]) ) - y_train0[-1]))*0.00 - 0.*max(0,(y_train0[-14]-y_train0[-1])/4)
+    adj_tot = 0.00*min(0.001,numpy.average(slope1[0:7])*coef_tot) - max(0,(numpy.mean(y_pred[0:5]) - y_train0[-1]))*0.00 - min(0,(max( numpy.mean(y_pred[0:10]), numpy.mean(y_pred[0:20]) ) - y_train0[-1]))*0.99 - 0.*max(0,(y_train0[-14]-y_train0[-1])/4)
     print('Today\'s R (predicted) and yesterday\'s R (actual): ',y_pred[0]+1.,y_train0[-1]+1.)
     #if y_train0[0] > 0: adj_tot -= max(0,(y_train0[14]-y_train0[0])/4)
     #adj_tot = numpy.average(slope1[0:7])*coef_tot
@@ -305,7 +305,7 @@ for state in states:
         print(datesJHU[-1],dth[-1])
         pos_poisson=[]
         for i in range(len(datesJHU)):
-            j=0;sum_weight=0;sum_pos=0;decay=-0.06;
+            j=0;sum_weight=0;sum_pos=0;decay=-0.0625;
             while datesJHU[i]-j*timedelta(days=1) in dates:
                 idx=dates.index(datesJHU[i]-j*timedelta(days=1))
                 sum_pos += numpy.exp(decay*j)*pos[idx]
@@ -336,7 +336,7 @@ for state in states:
         len(pos_poisson)
         len(pos_poisson_long)
         fatality_rate_poisson=[]
-        x_fit_poisson=[];y_fit_poisson=[];dates_fit_poisson=[];day_fit=90;nday=10;
+        x_fit_poisson=[];y_fit_poisson=[];dates_fit_poisson=[];nday=10;day_fit=150;#day_fit=360;
         if True:
             for i in range(nday,len(datesJHU)):
                 #print datesJHU[i],(dth[i]-dth[i-7]),pos_poisson[i-nday]
@@ -351,7 +351,8 @@ for state in states:
                 x_fit_poisson_proj.append(x_fit_poisson_proj[-1]+1);dates_fit_poisson_proj.append(dates_fit_poisson_proj[-1]+timedelta(days=1))
             for i in range(-day_fit-60,0): y_fit_poisson_proj[i]=numpy.exp(coef_poisson[0]*x_fit_poisson_proj[i]+coef_poisson[1])
             plt.plot(dates_fit_poisson_proj[-day_fit-60:],y_fit_poisson_proj[-day_fit-60:],'b');
-            plt.xticks([datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1),datetime(2020,8,1),datetime(2020,9,1),datetime(2020,10,1),datetime(2020,11,1),datetime(2020,12,1),datetime(2021,1,1),datetime(2021,2,1),datetime(2021,3,1)],['5/1','6/1','7/1','8/1','9/1','10/1','11/1','12/1','2021/1/1','2/1','3/1'])
+            plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1'])
+            #plt.xticks([datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1),datetime(2020,8,1),datetime(2020,9,1),datetime(2020,10,1),datetime(2020,11,1),datetime(2020,12,1),datetime(2021,1,1),datetime(2021,2,1),datetime(2021,3,1)],['5/1','6/1','7/1','8/1','9/1','10/1','11/1','12/1','2021/1/1','2/1','3/1'])
             plt.ylim([0.01,0.1])
             plt.plot([datetime(2020,5,31),datetime(2020,5,31)],[0.045,0.05],'k')
             plt.text(datetime(2020,5,21),0.051,'Memorial Day')
@@ -443,7 +444,8 @@ for state in states:
             plt.plot(datesJHU[0:idx+1],dth[0:idx+1],'k')
             plt.plot(datesJHU[idx+1:],dth[idx+1:],'r')
             if enddate > datetime(2020,6,30):
-                plt.xticks([datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1),datetime(2020,8,1),datetime(2020,9,1),datetime(2020,10,1),datetime(2020,11,1),datetime(2020,12,1),datetime(2021,1,1),datetime(2021,2,1),datetime(2021,3,1)],['2020/4/1','5/1','6/1','7/1','8/1','9/1','10/1','11/1','12/1','2021/1/1','2/1','3/1'])
+                plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1'])
+                #plt.xticks([datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1),datetime(2020,8,1),datetime(2020,9,1),datetime(2020,10,1),datetime(2020,11,1),datetime(2020,12,1),datetime(2021,1,1),datetime(2021,2,1),datetime(2021,3,1)],['2020/4/1','5/1','6/1','7/1','8/1','9/1','10/1','11/1','12/1','2021/1/1','2/1','3/1'])
             else:
                 plt.xticks([datetime(2020,3,1),datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1)],['2020/3/1','2020/4/1','2020/5/1','2020/6/1','2020/7/1'])
             plt.xlabel('Date');plt.ylabel('Total Deaths');plt.grid(which='both')
@@ -460,7 +462,7 @@ for state in states:
             dthavg[i] = numpy.average(dthdaily[max(0,i-n_avg+1):min(i+1,len(dth))])
         if True:
             date_proj = datetime(2020,7,20)
-            while date_proj < datetime(2021,1,24):
+            while date_proj < datetime(2021,4,14):
                 date_proj_tmp = date_proj
                 while True:
                     date = str(date_proj_tmp.year)+'-'
@@ -526,19 +528,22 @@ for state in states:
             for i in range(0,idx):
                 plt.plot(datesJHU[i],dth[i+1]-dth[i],'+k')
                 #print datesJHU[i],dth[i+1]-dth[i]
+            print(len(dth))
+            print(idx)
             for i in range(idx,len(dth)-1):
                 line3, = plt.plot(datesJHU[i],dth[i+1]-dth[i],'.r')
                 plt.plot(datesJHU[i],dth_l[i+1]-dth_l[i],'.r',markersize=2)
                 plt.plot(datesJHU[i],dth_h[i+1]-dth_h[i],'.r',markersize=2)
                 #plt.plot(datesJHU[i],(dth_l[i+1]-dth_l[i])*0.75,'.b')
             if enddate > datetime(2020,6,30):
-                plt.xticks([datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1),datetime(2020,8,1),datetime(2020,9,1),datetime(2020,10,1),datetime(2020,11,1),datetime(2020,12,1),datetime(2021,1,1),datetime(2021,2,1),datetime(2021,3,1)],['5/1','6/1','7/1','8/1','9/1','10/1','11/1','12/1','2021/1/1','2/1','3/1'])
+                plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1'])
+                #plt.xticks([datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1),datetime(2020,8,1),datetime(2020,9,1),datetime(2020,10,1),datetime(2020,11,1),datetime(2020,12,1),datetime(2021,1,1),datetime(2021,2,1),datetime(2021,3,1),datetime(2021,4,1)],['5/1','6/1','7/1','8/1','9/1','10/1','11/1','12/1','2021/1/1','2/1','3/1','4/1'])
             else:
                 plt.xticks([datetime(2020,3,1),datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1)],['2020/3/1','2020/4/1','2020/5/1','2020/6/1','2020/7/1'])
             plt.xlabel('Date');plt.ylabel('Daily Deaths');plt.grid(which='both')
             plt.xlim([datetime(2020,5,1),datesJHU[-1]+timedelta(days = 1)])
             plt.ylim([0,4000])
-            plt.legend([line1, line2, line3, line4, line5], ['7-day Average','Daily Deaths (JHU)','Projection','Previous Projections (QJHong @ covid forecast hub)','Previous Projections (YYG @ covid forecast hub)'])
+            plt.legend([line1, line2, line3, line4, line5], ['7-day Average','Daily Deaths (JHU)','Projection','Prev. Proj. (QJHong @CovidForecastHub)','Prev. Proj. (YYG @CovidForecastHub)'],loc=2)
             plt.tight_layout()
         plt.savefig('US_Death_Projection_daily',dpi=150)
         plt.close()
@@ -570,7 +575,7 @@ for state in states:
                 pos_out += pos[idx2]
                 pos_l_out += pos_l[idx2]
                 pos_h_out += pos_h[idx2]
-            if datesJHU[i].month==1 and datesJHU[i].day%7 == 2 and datesJHU[i].day > 23 or datesJHU[i].month==2 and datesJHU[i].day%7 == 6 or datesJHU[i].month==3 and datesJHU[i].day%7 == 6:
+            if datesJHU[i].month==7 and datesJHU[i].day%7 == 3 and datesJHU[i].day > 26 or datesJHU[i].month==8 and datesJHU[i].day%7 == 0 or datesJHU[i].month==9 and datesJHU[i].day%7 == 4:
                 count+=1
                 out2 = out+str(count)+' wk ahead cum death,'
                 date = str(datesJHU[i].year)+'-'
@@ -712,7 +717,7 @@ for state in states:
                 pos_out = 0
                 pos_l_out = 0
                 pos_h_out = 0
-            if  datesJHU[i].month==1 and datesJHU[i].day%7 == 2 or datesJHU[i].month==2 and datesJHU[i].day%7 == 6 or datesJHU[i].month==3 and datesJHU[i].day%7 == 6:
+            if datesJHU[i].month==7 and datesJHU[i].day%7 == 3 and datesJHU[i].day > 1 or datesJHU[i].month==8 and datesJHU[i].day%7 == 0 or datesJHU[i].month==9 and datesJHU[i].day%7 == 4:
                 pos_out = 0
                 pos_l_out = 0
                 pos_h_out = 0
