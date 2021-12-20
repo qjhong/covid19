@@ -31,7 +31,7 @@ else:
     states = [state]
     n_states = 1
 #states = ['AK', 'AL']
-enddate = datetime(2021,9,22);
+enddate = datetime(2022,2,5);
 nshift=25;
 coef_tot = 0.25;
 day = timedelta(days = 1)
@@ -39,6 +39,10 @@ day = timedelta(days = 1)
 X_train = []; Y_train = []; WEIGHT = []; X_pred = [];
 for state in states:
     SLP_SD, x_train, y_train, weight, std, x_pred, dates, dates_pred, slope1, pos, pos0, posavg = prepare_data(state,nshift,coef_tot,enddate)
+    #print(dates)
+    #print(dates_pred)
+    #print(len(dates))
+    #print(len(pos))
     #print(numpy.asarray(x_train)[:,4])
     #print(numpy.asarray(x_pred)[:,4])
     X_train += x_train
@@ -146,31 +150,55 @@ for state in states:
     std0 = numpy.sqrt(stderr*stderr+std0*std0)#+err2*err2)
     print(std0)
     #adj_tot = numpy.average(slope1[0:7])*coef_tot - max(0,y_pred[0] - y_train[0]) - max(0,(y_train[14]-y_train[0])/4)
-    adj_tot = 0.00*min(0.001,numpy.average(slope1[0:7])*coef_tot) - max(0,(numpy.mean(y_pred[0:5]) - y_train0[-1]))*0.00 - min(0,(max( numpy.mean(y_pred[0:10]), numpy.mean(y_pred[0:20]) ) - y_train0[-1]))*0.99 - 0.*max(0,(y_train0[-14]-y_train0[-1])/4)
+    adj_tot = 0.0
+    # testing slope
+    adj_tot += min(0.001,numpy.average(slope1[0:7])*coef_tot)*0.00
+    # gap if pred > train
+    adj_tot += - max(0,(numpy.mean(y_pred[0:5]) - y_train0[-1]))*1.00
+    # gap if pred < train
+    adj_tot += - min(0,(max( numpy.mean(y_pred[0:10]), numpy.mean(y_pred[0:20]) ) - y_train0[-1]))*0.00
+    # gap train
+    adj_tot += - max(0,(y_train0[-14]-y_train0[-1])/4) * 1.00
+    #adj_tot = 0.00*min(0.001,numpy.average(slope1[0:7])*coef_tot) - max(0,(numpy.mean(y_pred[0:5]) - y_train0[-1]))*0.00 - min(0,(max( numpy.mean(y_pred[0:10]), numpy.mean(y_pred[0:20]) ) - y_train0[-1]))*0.99 - 0.*max(0,(y_train0[-14]-y_train0[-1])/4)
     print('Today\'s R (predicted) and yesterday\'s R (actual): ',y_pred[0]+1.,y_train0[-1]+1.)
     #if y_train0[0] > 0: adj_tot -= max(0,(y_train0[14]-y_train0[0])/4)
     #adj_tot = numpy.average(slope1[0:7])*coef_tot
+    # special deduction 
+    adj_tot += - y_pred[0] * 0.01
     pos_l = [pos[i] for i in range(len(pos))]
     pos_h = [pos[i] for i in range(len(pos))]
     print('Adj_tot:',adj_tot)
     flag_first = True;f = 1.0; f=2.0
     print('y_pred:',y_pred)
+    #print(len(pos))
+    #print(len(dates))
+    #print(pos)
     for i in range(len(dates_pred)):
         if dates_pred[i] not in dates:
-            adj_tot *= 0.95
+            adj_tot *= 0.99 # adj_tot decay, was 0.95
             if flag_first:
                 flag_first = False
                 pos_now = pos0 * (y_pred[i]+adj_tot+1)
                 pos_now_l = pos0 * (y_pred[i]+adj_tot+1-std0*f)
                 pos_now_h = pos0 * (y_pred[i]+adj_tot+1+std0*f)
             else:
+                #print(dates_pred[i])
+                #print(dates_pred[i]-day*2)
+                #print(dates.index(dates_pred[i]-day))
+                #print(len(pos))
+                #print(len(dates))
+                #print(pos)
+                #print(dates)
                 pos_now = pos[dates.index(dates_pred[i]-day)] * (y_pred[i]+adj_tot+1)
                 pos_now_l = pos_l[dates.index(dates_pred[i]-day)] * (y_pred[i]+adj_tot+1-std0*f)
                 pos_now_h = pos_h[dates.index(dates_pred[i]-day)] * (y_pred[i]+adj_tot+1+std0*f)
             dates.append(dates_pred[i])
-            pos.append(pos_now)
-            pos_l.append(pos_now_l)
-            pos_h.append(pos_now_h)
+            #pos.append(pos_now)
+            #pos_l.append(pos_now_l)
+            #pos_h.append(pos_now_h)
+            pos=numpy.append(pos,[pos_now])
+            pos_l=numpy.append(pos_l,[pos_now_l])
+            pos_h=numpy.append(pos_h,[pos_now_h])
     
     dates_add = dates_pred[-1] + day
     while dates_add <= enddate:
@@ -182,9 +210,12 @@ for state in states:
     #       pos_now = pos[-1] * 0.97
     #       pos_now_l = pos_l[-1] * 0.97
     #       pos_now_h = pos_h[-1] * 0.97
-        pos.append(pos_now)
-        pos_l.append(pos_now_l)
-        pos_h.append(pos_now_h)
+        #pos.append(pos_now)
+        #pos_l.append(pos_now_l)
+        #pos_h.append(pos_now_h)
+        pos=numpy.append(pos,[pos_now])
+        pos_l=numpy.append(pos_l,[pos_now_l])
+        pos_h=numpy.append(pos_h,[pos_now_h])
         dates_add = dates_add + day
     
     len(dates)
@@ -305,7 +336,7 @@ for state in states:
         print(datesJHU[-1],dth[-1])
         pos_poisson=[]
         for i in range(len(datesJHU)):
-            j=0;sum_weight=0;sum_pos=0;decay=-0.0625;
+            j=0;sum_weight=0;sum_pos=0;decay=-0.075;
             while datesJHU[i]-j*timedelta(days=1) in dates:
                 idx=dates.index(datesJHU[i]-j*timedelta(days=1))
                 sum_pos += numpy.exp(decay*j)*pos[idx]
@@ -313,7 +344,8 @@ for state in states:
                 j += 1
             #pos_poisson.append(sum_pos/sum_weight)
             pos_poisson.append(sum_pos)
-        plt.plot(datesJHU,pos_poisson,'.r');plt.grid(which='both');plt.xticks([datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1),datetime(2020,8,1),datetime(2020,9,1),datetime(2020,10,1),datetime(2020,11,1)],['2020/4/1','2020/5/1','2020/6/1','2020/7/1','2020/8/1','2020/9/1','2020/10/1','2020/11/1'])
+        plt.plot(datesJHU,pos_poisson,'.r');plt.grid(which='both');
+        plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1),datetime(2021,11,1),datetime(2022,1,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1','11/1','2022/1/1'])
         plt.savefig('US_Death_accum_poisson',dpi=150)
         pos_poisson_long=[]
         for i in range(len(dates)):
@@ -336,7 +368,7 @@ for state in states:
         len(pos_poisson)
         len(pos_poisson_long)
         fatality_rate_poisson=[]
-        x_fit_poisson=[];y_fit_poisson=[];dates_fit_poisson=[];nday=10;day_fit=150;#day_fit=360;
+        x_fit_poisson=[];y_fit_poisson=[];dates_fit_poisson=[];nday=10;day_fit=485;#day_fit=360;
         if True:
             for i in range(nday,len(datesJHU)):
                 #print datesJHU[i],(dth[i]-dth[i-7]),pos_poisson[i-nday]
@@ -351,17 +383,17 @@ for state in states:
                 x_fit_poisson_proj.append(x_fit_poisson_proj[-1]+1);dates_fit_poisson_proj.append(dates_fit_poisson_proj[-1]+timedelta(days=1))
             for i in range(-day_fit-60,0): y_fit_poisson_proj[i]=numpy.exp(coef_poisson[0]*x_fit_poisson_proj[i]+coef_poisson[1])
             plt.plot(dates_fit_poisson_proj[-day_fit-60:],y_fit_poisson_proj[-day_fit-60:],'b');
-            plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1'])
+            plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1),datetime(2021,11,1),datetime(2022,1,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1','11/1','2022/1/1'])
             #plt.xticks([datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1),datetime(2020,8,1),datetime(2020,9,1),datetime(2020,10,1),datetime(2020,11,1),datetime(2020,12,1),datetime(2021,1,1),datetime(2021,2,1),datetime(2021,3,1)],['5/1','6/1','7/1','8/1','9/1','10/1','11/1','12/1','2021/1/1','2/1','3/1'])
-            plt.ylim([0.01,0.1])
-            plt.plot([datetime(2020,5,31),datetime(2020,5,31)],[0.045,0.05],'k')
-            plt.text(datetime(2020,5,21),0.051,'Memorial Day')
-            plt.plot([datetime(2020,7,4),datetime(2020,7,4)],[0.023,0.025],'k')
-            plt.text(datetime(2020,6,24),0.026,'Independence Day')
-            plt.plot([datetime(2020,9,9),datetime(2020,9,9)],[0.019,0.021],'k')
-            plt.text(datetime(2020,8,31),0.022,'Labor Day')
-            plt.plot([datetime(2020,11,28),datetime(2020,11,28)],[0.018,0.020],'k')
-            plt.text(datetime(2020,11,18),0.021,'Thanksgiving')
+            plt.ylim([0.008,0.1])
+            #plt.plot([datetime(2020,5,31),datetime(2020,5,31)],[0.045,0.05],'k')
+            #plt.text(datetime(2020,5,21),0.051,'Memorial Day')
+            #plt.plot([datetime(2020,7,4),datetime(2020,7,4)],[0.023,0.025],'k')
+            #plt.text(datetime(2020,6,24),0.026,'Independence Day')
+            #plt.plot([datetime(2020,9,9),datetime(2020,9,9)],[0.019,0.021],'k')
+            #plt.text(datetime(2020,8,31),0.022,'Labor Day')
+            #plt.plot([datetime(2020,11,28),datetime(2020,11,28)],[0.018,0.020],'k')
+            #plt.text(datetime(2020,11,18),0.021,'Thanksgiving')
             plt.legend(['Actual','Projected'])
             plt.savefig('US_Death_ratio_poisson',dpi=150)
     
@@ -444,7 +476,7 @@ for state in states:
             plt.plot(datesJHU[0:idx+1],dth[0:idx+1],'k')
             plt.plot(datesJHU[idx+1:],dth[idx+1:],'r')
             if enddate > datetime(2020,6,30):
-                plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1'])
+                plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1),datetime(2021,11,1),datetime(2022,1,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1','11/1','2022/1/1'])
                 #plt.xticks([datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1),datetime(2020,8,1),datetime(2020,9,1),datetime(2020,10,1),datetime(2020,11,1),datetime(2020,12,1),datetime(2021,1,1),datetime(2021,2,1),datetime(2021,3,1)],['2020/4/1','5/1','6/1','7/1','8/1','9/1','10/1','11/1','12/1','2021/1/1','2/1','3/1'])
             else:
                 plt.xticks([datetime(2020,3,1),datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1)],['2020/3/1','2020/4/1','2020/5/1','2020/6/1','2020/7/1'])
@@ -460,67 +492,69 @@ for state in states:
         for i in range(idx):
             dthavg[i] = numpy.average(dthdaily[max(0,i-n_avg//2):min(i+n_avg//2+1,len(dth))])
             dthavg[i] = numpy.average(dthdaily[max(0,i-n_avg+1):min(i+1,len(dth))])
+        #if False:
         if True:
             date_proj = datetime(2020,7,20)
-            while date_proj < datetime(2021,4,14):
-                date_proj_tmp = date_proj
-                while True:
-                    date = str(date_proj_tmp.year)+'-'
-                    if date_proj_tmp.month<10: date += '0'
-                    date += str(date_proj_tmp.month)+'-'
-                    if date_proj_tmp.day<10: date = date+'0'
-                    date += str(date_proj_tmp.day)
-                    filename = date + '-QJHong-Encounter.csv'
-                    if path.exists('../covid19-forecast-hub/data-processed/QJHong-Encounter/'+filename):
-                        #print('success')
-                        print(filename)
-                        break
-                    else:
-                        date_proj_tmp -=timedelta(days = 1)
-                data = pd.read_csv('../covid19-forecast-hub/data-processed/QJHong-Encounter/'+filename)
-                #print(data.loc[data['type']=='point']
-                date_his, deaths_proj = [], []
-                for i in range(1,5):
-                    date_his.append(date_proj + timedelta(days = 1) * (2 + 7 * (i-1)))
-                    line = data.loc[data['type']=='point'].loc[data['target']==str(i)+' wk ahead inc death']
-                    deaths_proj.append(line['value'].values[0]/7.)
-                    print(line['target_end_date'])
-                x_fit = [4,11,18,25]
-                coef=numpy.polyfit(x_fit,deaths_proj,2);
-                y_fit = [0]*4
-                for i in range(len(x_fit)): y_fit[i]=coef[0]*x_fit[i]**2+coef[1]*x_fit[i]+coef[2]
-                line4, = plt.plot(date_his,y_fit,color=(1,0.7,0.7))
-                date_proj += timedelta(days = 21)
-            date_proj = datetime(2020,7,20)
-            while date_proj < datetime(2020,10,8):
-                date_proj_tmp = date_proj
-                while date_proj_tmp > date_proj - timedelta(days = 5):
-                    date = str(date_proj_tmp.year)+'-'
-                    if date_proj_tmp.month<10: date += '0'
-                    date += str(date_proj_tmp.month)+'-'
-                    if date_proj_tmp.day<10: date = date+'0'
-                    date += str(date_proj_tmp.day)
-                    filename = date + '-YYG-ParamSearch.csv'
-                    if path.exists('../covid19-forecast-hub/data-processed/YYG-ParamSearch/'+filename):
-                        #print('success')
-                        print(filename)
-                        break
-                    else:
-                        date_proj_tmp -=timedelta(days = 1)
-                data = pd.read_csv('../covid19-forecast-hub/data-processed/YYG-ParamSearch/'+filename)
-                #print(data.loc[data['type']=='point']
-                date_his, deaths_proj = [], []
-                for i in range(1,5):
-                    date_his.append(date_proj + timedelta(days = 1) * (2 + 7 * (i-1)))
-                    line = data.loc[data['type']=='point'].loc[data['location']=='US'].loc[data['target']==str(i)+' wk ahead inc death']
-                    deaths_proj.append(line['value'].values[0]/7.)
-                    print(line['target_end_date'])
-                x_fit = [4,11,18,25]
-                coef=numpy.polyfit(x_fit,deaths_proj,2);
-                y_fit = [0]*4
-                for i in range(len(x_fit)): y_fit[i]=coef[0]*x_fit[i]**2+coef[1]*x_fit[i]+coef[2]
-                line5, = plt.plot(date_his,y_fit,color=(0.7,0.7,1))
-                date_proj += timedelta(days = 21)
+            #while date_proj < datetime(2021,4,14):
+            #    date_proj_tmp = date_proj
+            #    while True:
+            #        date = str(date_proj_tmp.year)+'-'
+            #        if date_proj_tmp.month<10: date += '0'
+            #        date += str(date_proj_tmp.month)+'-'
+            #        if date_proj_tmp.day<10: date = date+'0'
+            #        date += str(date_proj_tmp.day)
+            #        filename = date + '-QJHong-Encounter.csv'
+            #        if path.exists('../covid19-forecast-hub/data-processed/QJHong-Encounter/'+filename):
+            #            #print('success')
+            #            print(filename)
+            #            break
+            #        else:
+            #            date_proj_tmp -=timedelta(days = 1)
+            #            #print(date_proj_tmp)
+            #    data = pd.read_csv('../covid19-forecast-hub/data-processed/QJHong-Encounter/'+filename)
+            #    #print(data.loc[data['type']=='point']
+            #    date_his, deaths_proj = [], []
+            #    for i in range(1,5):
+            #        date_his.append(date_proj + timedelta(days = 1) * (2 + 7 * (i-1)))
+            #        line = data.loc[data['type']=='point'].loc[data['target']==str(i)+' wk ahead inc death']
+            #        deaths_proj.append(line['value'].values[0]/7.)
+            #        print(line['target_end_date'])
+            #    x_fit = [4,11,18,25]
+            #    coef=numpy.polyfit(x_fit,deaths_proj,2);
+            #    y_fit = [0]*4
+            #    for i in range(len(x_fit)): y_fit[i]=coef[0]*x_fit[i]**2+coef[1]*x_fit[i]+coef[2]
+            #    line4, = plt.plot(date_his,y_fit,color=(1,0.7,0.7))
+            #    date_proj += timedelta(days = 21)
+            #date_proj = datetime(2020,7,20)
+            #while date_proj < datetime(2020,10,8):
+            #    date_proj_tmp = date_proj
+            #    while date_proj_tmp > date_proj - timedelta(days = 5):
+            #        date = str(date_proj_tmp.year)+'-'
+            #        if date_proj_tmp.month<10: date += '0'
+            #        date += str(date_proj_tmp.month)+'-'
+            #        if date_proj_tmp.day<10: date = date+'0'
+            #        date += str(date_proj_tmp.day)
+            #        filename = date + '-YYG-ParamSearch.csv'
+            #        if path.exists('../covid19-forecast-hub/data-processed/YYG-ParamSearch/'+filename):
+            #            #print('success')
+            #            print(filename)
+            #            break
+            #        else:
+            #            date_proj_tmp -=timedelta(days = 1)
+            #    data = pd.read_csv('../covid19-forecast-hub/data-processed/YYG-ParamSearch/'+filename)
+            #    #print(data.loc[data['type']=='point']
+            #    date_his, deaths_proj = [], []
+            #    for i in range(1,5):
+            #        date_his.append(date_proj + timedelta(days = 1) * (2 + 7 * (i-1)))
+            #        line = data.loc[data['type']=='point'].loc[data['location']=='US'].loc[data['target']==str(i)+' wk ahead inc death']
+            #        deaths_proj.append(line['value'].values[0]/7.)
+            #        print(line['target_end_date'])
+            #    x_fit = [4,11,18,25]
+            #    coef=numpy.polyfit(x_fit,deaths_proj,2);
+            #    y_fit = [0]*4
+            #    for i in range(len(x_fit)): y_fit[i]=coef[0]*x_fit[i]**2+coef[1]*x_fit[i]+coef[2]
+            #    line5, = plt.plot(date_his,y_fit,color=(0.7,0.7,1))
+            #    date_proj += timedelta(days = 21)
             line1, = plt.plot(datesJHU[:idx],dthavg[:idx],'k')
             line2, = plt.plot(datesJHU[0],dth[0+1]-dth[0],'+k')
             plt.plot(datesJHU[-2],dth[-1]-dth[-2],'.r')
@@ -536,14 +570,15 @@ for state in states:
                 plt.plot(datesJHU[i],dth_h[i+1]-dth_h[i],'.r',markersize=2)
                 #plt.plot(datesJHU[i],(dth_l[i+1]-dth_l[i])*0.75,'.b')
             if enddate > datetime(2020,6,30):
-                plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1'])
+                plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1),datetime(2021,11,1),datetime(2022,1,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1','11/1','2022/1/1'])
                 #plt.xticks([datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1),datetime(2020,8,1),datetime(2020,9,1),datetime(2020,10,1),datetime(2020,11,1),datetime(2020,12,1),datetime(2021,1,1),datetime(2021,2,1),datetime(2021,3,1),datetime(2021,4,1)],['5/1','6/1','7/1','8/1','9/1','10/1','11/1','12/1','2021/1/1','2/1','3/1','4/1'])
             else:
                 plt.xticks([datetime(2020,3,1),datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1)],['2020/3/1','2020/4/1','2020/5/1','2020/6/1','2020/7/1'])
             plt.xlabel('Date');plt.ylabel('Daily Deaths');plt.grid(which='both')
             plt.xlim([datetime(2020,5,1),datesJHU[-1]+timedelta(days = 1)])
             plt.ylim([0,4000])
-            plt.legend([line1, line2, line3, line4, line5], ['7-day Average','Daily Deaths (JHU)','Projection','Prev. Proj. (QJHong @CovidForecastHub)','Prev. Proj. (YYG @CovidForecastHub)'],loc=2)
+            plt.legend([line1, line2, line3], ['7-day Average','Daily Deaths (JHU)','Projection'],loc=2)
+            #plt.legend([line1, line2, line3, line4, line5], ['7-day Average','Daily Deaths (JHU)','Projection','Prev. Proj. (QJHong @CovidForecastHub)','Prev. Proj. (YYG @CovidForecastHub)'],loc=2)
             plt.tight_layout()
         plt.savefig('US_Death_Projection_daily',dpi=150)
         plt.close()
@@ -575,7 +610,7 @@ for state in states:
                 pos_out += pos[idx2]
                 pos_l_out += pos_l[idx2]
                 pos_h_out += pos_h[idx2]
-            if datesJHU[i].month==7 and datesJHU[i].day%7 == 3 and datesJHU[i].day > 26 or datesJHU[i].month==8 and datesJHU[i].day%7 == 0 or datesJHU[i].month==9 and datesJHU[i].day%7 == 4:
+            if datesJHU[i].month==12 and datesJHU[i].day%7 == 4 and datesJHU[i].day > 11 or datesJHU[i].month==1 and datesJHU[i].day%7 == 1 or datesJHU[i].month==2 and datesJHU[i].day%7 == 5:
                 count+=1
                 out2 = out+str(count)+' wk ahead cum death,'
                 date = str(datesJHU[i].year)+'-'
@@ -717,7 +752,7 @@ for state in states:
                 pos_out = 0
                 pos_l_out = 0
                 pos_h_out = 0
-            if datesJHU[i].month==7 and datesJHU[i].day%7 == 3 and datesJHU[i].day > 1 or datesJHU[i].month==8 and datesJHU[i].day%7 == 0 or datesJHU[i].month==9 and datesJHU[i].day%7 == 4:
+            if datesJHU[i].month==11 and datesJHU[i].day%7 == 6 or datesJHU[i].month==12 and datesJHU[i].day%7 == 4 or datesJHU[i].month==1 and datesJHU[i].day%7 == 1:
                 pos_out = 0
                 pos_l_out = 0
                 pos_h_out = 0

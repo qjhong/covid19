@@ -7,7 +7,7 @@ cp list list_tmp
 rm summary
 while ( $l > 0 )
   set state = `head -1 list_tmp`
-  set line = `cat "$dir"/"$state"_proj | grep '2021 7 24'`
+  set line = `cat "$dir"/"$state"_proj | grep '2021 11 23'`
   set number = `echo $line | awk '{print $4}'`
   echo $number $state >> summary
   sed '1d' list_tmp > list_tmp2
@@ -22,7 +22,7 @@ cp list list_tmp
 rm summary
 while ( $l > 0 )
   set state = `head -1 list_tmp`
-  set line = `cat "$dir"/"$state"_proj | grep '2021 7 29'`
+  set line = `cat "$dir"/"$state"_proj | grep '2021 11 28'`
   set number = `echo $line | awk '{print $4}'`
   echo $number $state >> summary
   sed '1d' list_tmp > list_tmp2
@@ -37,7 +37,7 @@ cp list list_tmp
 rm summary
 while ( $l > 0 )
   set state = `head -1 list_tmp`
-  set line = `cat "$dir"/"$state"_proj | grep '2021 8 19'`
+  set line = `cat "$dir"/"$state"_proj | grep '2021 12 8'`
   set number = `echo $line | awk '{print $4}'`
   echo $number $state >> summary
   sed '1d' list_tmp > list_tmp2
@@ -52,7 +52,7 @@ cp list list_tmp
 rm summary
 while ( $l > 0 )
   set state = `head -1 list_tmp`
-  set line = `cat "$dir"/"$state"_proj | grep '2021 2 28'`
+  set line = `cat "$dir"/"$state"_proj | grep '2021 12 31'`
   set number = `echo $line | awk '{print $4}'`
   echo $number $state >> summary
   sed '1d' list_tmp > list_tmp2

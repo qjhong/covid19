@@ -215,6 +215,7 @@ def get_DNC_JHU(state):
     dates.reverse()
     #print(dates)
     #print(pos)
+    if state == 'Colorado': pos[0] = pos[1] 
 
     return dates,pos,tot,dth
 
@@ -284,7 +285,7 @@ def plot_DNC(dates,pos,tot,state):
     plt.text(dates[68],min(tot[0:10])/1.99,"Trend: "+str(format(-ctot[0]*100, '.2f'))+"% per day")
     plt.xlim([datetime(2020,3,20),dates[0]]);plt.ylim([min(pos[0:70])*0.9,max(tot)*1.1])
     plt.text(dates[45],max(tot)/2,state,fontsize=20)
-    plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1'])
+    plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1),datetime(2021,11,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1','11/1'])
     plt.xlabel('Date');plt.ylabel('Daily New Cases');plt.grid(which='both')
     plt.legend(['Daily New Cases','Daily Total Tests'])
     plt.tight_layout()
@@ -326,7 +327,7 @@ def plot_proj_US(dates,pos,posavg,dates_proj,enddate,pos_l,pos_h,date_past,pos_p
     #plt.plot(date_past4,pos_l_past4,'--',color=(1,0.7,0.7));
     #plt.plot(date_past4,pos_h_past4,'--',color=(1,0.7,0.7));
     #plt.xticks([datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1),datetime(2020,8,1)],['2020/5/1','2020/6/1','2020/7/1','2020/8/1'])
-    plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1'])
+    plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1),datetime(2021,11,1),datetime(2022,1,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1','11/1','2022/1/1'])
     #plt.xticks([datetime(2020,3,1),datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1),datetime(2020,8,1)],['2020/3/1','2020/4/1','2020/5/1','2020/6/1','2020/7/1','2020/8/1'])
     plt.xlabel('Date');plt.ylabel('Daily New Cases');plt.grid(which='both')
     #plt.legend(['Projection','Daily New Cases','7-day Average','95% Confidence Interval','Apply latest model to Aug07,','Jul07, Jun07 and May12'])
@@ -334,7 +335,7 @@ def plot_proj_US(dates,pos,posavg,dates_proj,enddate,pos_l,pos_h,date_past,pos_p
     #plt.legend(['Projection','Projection (extended)','Daily New Cases','7-day Average','95% Confidence Interval','95% Confidence Interval (incl. Method Error)','Projection Made 2 Weeks Ago'])
     #plt.legend(['Projection','Daily New Cases','7-day Average','95% Confidence Interval (Statistical)','95% Confidence Interval (incl. Method Error)','Projection Made 2 Weeks Ago'])
     plt.text(dates[40],max(pos[:-1])/1.1,state,fontsize=20)
-    plt.ylim([0,500001])
+    plt.ylim([0,300001])
     plt.tight_layout()
     plt.savefig(state+'_Projection',dpi=150)
 
@@ -350,24 +351,25 @@ def plot_proj(dates,pos,posavg,dates_proj,enddate,pos_l,pos_h,date_past,pos_past
 #    plt.plot(dates[len(posavg):idx+1],pos_l2[len(posavg):idx+1],':r');
     plt.plot(dates[idx+1:len(pos)],pos[idx+1:len(pos)],'.r');
     plt.plot(dates[len(posavg):idx+1],pos_l[len(posavg):idx+1],'r');
-    plt.plot(date_past,pos_past,'--',color=(1,0.7,0.7));
+    #plt.plot(date_past,pos_past,'--',color=(1,0.7,0.7));
     plt.plot(dates[idx+1:len(pos)],pos_l[idx+1:len(pos)],'r');
 #    plt.plot(dates[idx+1:len(pos)],pos_l2[idx+1:len(pos)],':m');
     plt.plot(dates[len(posavg):idx+1],pos_h[len(posavg):idx+1],'r');
 #    plt.plot(dates[len(posavg):idx+1],pos_h2[len(posavg):idx+1],':r');
     plt.plot(dates[idx+1:len(pos)],pos_h[idx+1:len(pos)],'r');
 #    plt.plot(dates[idx+1:len(pos)],pos_h2[idx+1:len(pos)],':m');
-    plt.plot(date_past,pos_past,'--',color=(1,0.7,0.7));
-    plt.plot(date_past,pos_l_past,'--',color=(1,0.7,0.7));
-    plt.plot(date_past,pos_h_past,'--',color=(1,0.7,0.7));
+    #plt.plot(date_past,pos_past,'--',color=(1,0.7,0.7));
+    #plt.plot(date_past,pos_l_past,'--',color=(1,0.7,0.7));
+    #plt.plot(date_past,pos_h_past,'--',color=(1,0.7,0.7));
 #    for i in range(len(posavg),idx+1):
 #        plt.plot([dates[i],dates[i]],[pos_l[i],pos_h[i]],'.r');
 #    for i in range(idx+1,len(pos)):
 #        plt.plot([dates[i],dates[i]],[pos_l[i],pos_h[i]],'.m');
-    plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1'])
+    plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1),datetime(2021,11,1),datetime(2022,1,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1','11/1','2022/1/1'])
     #plt.xticks([datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1),datetime(2020,8,1),datetime(2020,9,1),datetime(2020,10,1),datetime(2020,11,1),datetime(2020,12,1),datetime(2021,1,1),datetime(2021,2,1),datetime(2021,3,1),datetime(2021,4,1)],['2020/4/1','5/1','6/1','7/1','8/1','9/1','10/1','11/1','12/1','2021/1/1','2/1','3/1','4/1'])
     plt.xlabel('Date');plt.ylabel('Daily New Cases');plt.grid(which='both')
-    plt.legend(['Projection','Daily New Cases','7-day Average','95% Confidence Interval (Statistical)','Projection Made on June 7'])
+    #plt.legend(['Projection','Daily New Cases','7-day Average','95% Confidence Interval (Statistical)','Projection Made on June 7'])
+    plt.legend(['Projection','Daily New Cases','7-day Average','95% Confidence Interval (Statistical)'])
     plt.text(dates[15],max(pos)/1.1,state,fontsize=20)
     plt.ylim([0,max(pos)*1.2])
     plt.tight_layout()
@@ -445,6 +447,12 @@ def prepare_data(state,nshift,coef_tot,enddate):
     # generate pos_fit, tot_fit, remove excessive oscillation
     flagstop = False;navg=0;
     epsilon = 1.e-8
+    pos = numpy.asarray(pos)
+    tot = numpy.asarray(tot)
+    pos[numpy.isnan(pos)] = 0.
+    tot[numpy.isnan(tot)] = 0.
+    #print(tot)
+    #print(pos)
     while not flagstop:
         tot_tmp=[0]*len(tot);flagstop=True
         for i in range(len(tot)): tot_tmp[i] = numpy.mean(tot[max(i-navg,0):min(i+navg+1,len(tot))])
@@ -458,7 +466,7 @@ def prepare_data(state,nshift,coef_tot,enddate):
     while not flagstop:
         pos_tmp=[0]*len(pos);flagstop=True
         for i in range(len(pos)): pos_tmp[i] = numpy.mean(pos[max(i-navg,0):min(i+navg+1,len(pos))])
-        for i in range(60):
+        for i in range(10):
             r1 = pos_tmp[i] / ( pos_tmp[i+1] + epsilon )
             if r1>1.5 or r1<0.6:
             #if r1>1.1 or r1<0.9:
@@ -512,7 +520,7 @@ def prepare_data(state,nshift,coef_tot,enddate):
     #plt.plot(dates[0:ndays],slope_avghat[0:ndays]+1.,'b');plt.plot(dates[0:ndays],slope_avg[0:ndays]+1.,'m');plt.plot(dates[0:ndays],slope0[0:ndays]+1.,'r');plt.plot(dates[0:ndays],slope1[0:ndays]+1.,'k');plt.grid(which='both');
     #plt.plot(dates[0:ndays],slope_avghat[0:ndays]+1.,'b');plt.plot(dates[0:ndays],slope0[0:ndays]+1.,'r');plt.plot(dates[0:ndays],slope1[0:ndays]+1.,'k');plt.grid(which='both');
     plt.plot(dates[0:ndays],numpy.asarray(slope_avghat[0:ndays])+1.,'r');plt.plot(dates[0:ndays],numpy.asarray(slope0[0:ndays])+1.,'b');plt.plot(dates[0:ndays],numpy.asarray(slope1[0:ndays])+1.,'k');plt.grid(which='both');
-    plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1'])
+    plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1),datetime(2021,11,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1','11/1'])
     slope_avg = slope_avghat
     plt.legend(['Daily reproductive number (smoothed)', 'Daily reproductive number', 'Testing increase rate'])
     plt.xlabel('Date')
