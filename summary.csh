@@ -52,7 +52,7 @@ cp list list_tmp
 rm summary
 while ( $l > 0 )
   set state = `head -1 list_tmp`
-  set line = `cat "$dir"/"$state"_proj | grep '2021 12 31'`
+  set line = `cat "$dir"/"$state"_proj | grep '2022 3 3'`
   set number = `echo $line | awk '{print $4}'`
   echo $number $state >> summary
   sed '1d' list_tmp > list_tmp2

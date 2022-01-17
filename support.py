@@ -335,7 +335,7 @@ def plot_proj_US(dates,pos,posavg,dates_proj,enddate,pos_l,pos_h,date_past,pos_p
     #plt.legend(['Projection','Projection (extended)','Daily New Cases','7-day Average','95% Confidence Interval','95% Confidence Interval (incl. Method Error)','Projection Made 2 Weeks Ago'])
     #plt.legend(['Projection','Daily New Cases','7-day Average','95% Confidence Interval (Statistical)','95% Confidence Interval (incl. Method Error)','Projection Made 2 Weeks Ago'])
     plt.text(dates[40],max(pos[:-1])/1.1,state,fontsize=20)
-    plt.ylim([0,300001])
+    plt.ylim([0,3000001])
     plt.tight_layout()
     plt.savefig(state+'_Projection',dpi=150)
 

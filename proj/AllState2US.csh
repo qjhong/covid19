@@ -1,10 +1,10 @@
 #!/bin/csh
 @ date = `date | awk '{print $3}'`
-@ date = 6
-@ month = 12
-@ enddate = 15
-@ endmonth = 2
-@ year = 2021
+@ date = 1
+@ month = 1
+@ enddate = 31
+@ endmonth = 3
+@ year = 2022
 @ endyear = 2022
 while ( $year < $endyear || $month < $endmonth || $date <= $enddate )
   set sum = `grep "$year $month $date " *_proj | awk '{s+=$4} END {print s}'`
