@@ -31,7 +31,7 @@ else:
     states = [state]
     n_states = 1
 #states = ['AK', 'AL']
-enddate = datetime(2022,2,13);
+enddate = datetime(2022,3,20);
 nshift=25;
 coef_tot = 0.25;
 day = timedelta(days = 1)
@@ -369,7 +369,7 @@ for state in states:
         len(pos_poisson)
         len(pos_poisson_long)
         fatality_rate_poisson=[]
-        x_fit_poisson=[];y_fit_poisson=[];dates_fit_poisson=[];nday=10;day_fit=30;#day_fit=360;
+        x_fit_poisson=[];y_fit_poisson=[];dates_fit_poisson=[];nday=10;day_fit=8;#day_fit=360;
         if True:
             for i in range(nday,len(datesJHU)):
                 #print datesJHU[i],(dth[i]-dth[i-7]),pos_poisson[i-nday]
@@ -477,7 +477,7 @@ for state in states:
             plt.plot(datesJHU[0:idx+1],dth[0:idx+1],'k')
             plt.plot(datesJHU[idx+1:],dth[idx+1:],'r')
             if enddate > datetime(2020,6,30):
-                plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1),datetime(2021,11,1),datetime(2022,1,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1','11/1','2022/1/1'])
+                plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1),datetime(2021,11,1),datetime(2022,1,1),datetime(2022,3,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1','11/1','2022/1/1','2022/3/1'])
                 #plt.xticks([datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1),datetime(2020,8,1),datetime(2020,9,1),datetime(2020,10,1),datetime(2020,11,1),datetime(2020,12,1),datetime(2021,1,1),datetime(2021,2,1),datetime(2021,3,1)],['2020/4/1','5/1','6/1','7/1','8/1','9/1','10/1','11/1','12/1','2021/1/1','2/1','3/1'])
             else:
                 plt.xticks([datetime(2020,3,1),datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1)],['2020/3/1','2020/4/1','2020/5/1','2020/6/1','2020/7/1'])
@@ -611,7 +611,7 @@ for state in states:
                 pos_out += pos[idx2]
                 pos_l_out += pos_l[idx2]
                 pos_h_out += pos_h[idx2]
-            if datesJHU[i].month==1 and datesJHU[i].day%7 == 1 and datesJHU[i].day > 15 or datesJHU[i].month==2 and datesJHU[i].day%7 == 5:
+            if datesJHU[i].month==1 and datesJHU[i].day%7 == 1 and datesJHU[i].day > 22 or datesJHU[i].month==2 and datesJHU[i].day%7 == 5 or datesJHU[i].month==3 and datesJHU[i].day%7 == 5:
                 count+=1
                 out2 = out+str(count)+' wk ahead cum death,'
                 date = str(datesJHU[i].year)+'-'
@@ -753,7 +753,7 @@ for state in states:
                 pos_out = 0
                 pos_l_out = 0
                 pos_h_out = 0
-            if datesJHU[i].month==11 and datesJHU[i].day%7 == 6 or datesJHU[i].month==12 and datesJHU[i].day%7 == 4 or datesJHU[i].month==1 and datesJHU[i].day%7 == 1 or datesJHU[i].month==2 and datesJHU[i].day%7 == 5:
+            if datesJHU[i].month==11 and datesJHU[i].day%7 == 6 or datesJHU[i].month==12 and datesJHU[i].day%7 == 4 or datesJHU[i].month==1 and datesJHU[i].day%7 == 1 or datesJHU[i].month==2 and datesJHU[i].day%7 == 5 or datesJHU[i].month==3 and datesJHU[i].day%7 == 5:
                 pos_out = 0
                 pos_l_out = 0
                 pos_h_out = 0

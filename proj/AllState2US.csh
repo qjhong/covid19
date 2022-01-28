@@ -1,6 +1,6 @@
 #!/bin/csh
 @ date = `date | awk '{print $3}'`
-@ date = 1
+@ date = 20
 @ month = 1
 @ enddate = 31
 @ endmonth = 3

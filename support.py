@@ -327,7 +327,7 @@ def plot_proj_US(dates,pos,posavg,dates_proj,enddate,pos_l,pos_h,date_past,pos_p
     #plt.plot(date_past4,pos_l_past4,'--',color=(1,0.7,0.7));
     #plt.plot(date_past4,pos_h_past4,'--',color=(1,0.7,0.7));
     #plt.xticks([datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1),datetime(2020,8,1)],['2020/5/1','2020/6/1','2020/7/1','2020/8/1'])
-    plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1),datetime(2021,11,1),datetime(2022,1,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1','11/1','2022/1/1'])
+    plt.xticks([datetime(2020,3,1),datetime(2020,5,1),datetime(2020,7,1),datetime(2020,9,1),datetime(2020,11,1),datetime(2021,1,1),datetime(2021,3,1),datetime(2021,5,1),datetime(2021,7,1),datetime(2021,9,1),datetime(2021,11,1),datetime(2022,1,1),datetime(2022,3,1)],['2020/3/1','5/1','7/1','9/1','11/1','2021/1/1','3/1','5/1','7/1','9/1','11/1','2022/1/1','2022/3/1'])
     #plt.xticks([datetime(2020,3,1),datetime(2020,4,1),datetime(2020,5,1),datetime(2020,6,1),datetime(2020,7,1),datetime(2020,8,1)],['2020/3/1','2020/4/1','2020/5/1','2020/6/1','2020/7/1','2020/8/1'])
     plt.xlabel('Date');plt.ylabel('Daily New Cases');plt.grid(which='both')
     #plt.legend(['Projection','Daily New Cases','7-day Average','95% Confidence Interval','Apply latest model to Aug07,','Jul07, Jun07 and May12'])
@@ -335,7 +335,7 @@ def plot_proj_US(dates,pos,posavg,dates_proj,enddate,pos_l,pos_h,date_past,pos_p
     #plt.legend(['Projection','Projection (extended)','Daily New Cases','7-day Average','95% Confidence Interval','95% Confidence Interval (incl. Method Error)','Projection Made 2 Weeks Ago'])
     #plt.legend(['Projection','Daily New Cases','7-day Average','95% Confidence Interval (Statistical)','95% Confidence Interval (incl. Method Error)','Projection Made 2 Weeks Ago'])
     plt.text(dates[40],max(pos[:-1])/1.1,state,fontsize=20)
-    plt.ylim([0,3000001])
+    plt.ylim([0,1500001])
     plt.tight_layout()
     plt.savefig(state+'_Projection',dpi=150)
 
@@ -553,7 +553,8 @@ def prepare_data(state,nshift,coef_tot,enddate):
     #%%
     data0 = pd.read_csv('data/2020_US_Region_Mobility_Report.csv')
     data1 = pd.read_csv('data/2021_US_Region_Mobility_Report.csv')
-    data = pd.concat([data0,data1],axis=0).reset_index()
+    data2 = pd.read_csv('data/2022_US_Region_Mobility_Report.csv')
+    data = pd.concat([data0,data1,data2],axis=0).reset_index()
     if state != 'US':
         data_dates = data.loc[data['iso_3166_2_code']=='US-'+state]['date']
         data_mobil = data.loc[data['iso_3166_2_code']=='US-'+state]['residential_percent_change_from_baseline']
