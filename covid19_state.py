@@ -20,7 +20,8 @@ state = tmp[1]
 #state = "US"
 
 if state == 'all':
-    states = ['AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', \
+    #states = ['AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', \
+    states = ['AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DE', 'FL', \
               'GA', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS', 'KY', 'LA', 'MA', \
               'MD', 'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NC', 'ND', 'NE', \
               'NH', 'NJ', 'NM', 'NV', 'NY', 'OH', 'OK', 'OR', 'PA', 'RI', \
@@ -31,7 +32,7 @@ else:
     states = [state]
     n_states = 1
 #states = ['AK', 'AL']
-enddate = datetime(2022,3,20);
+enddate = datetime(2022,7,20);
 nshift=25;
 coef_tot = 0.25;
 day = timedelta(days = 1)
@@ -337,7 +338,7 @@ for state in states:
         print(datesJHU[-1],dth[-1])
         pos_poisson=[]
         for i in range(len(datesJHU)):
-            j=0;sum_weight=0;sum_pos=0;decay=-0.075;
+            j=0;sum_weight=0;sum_pos=0;decay=-0.035;
             while datesJHU[i]-j*timedelta(days=1) in dates:
                 idx=dates.index(datesJHU[i]-j*timedelta(days=1))
                 sum_pos += numpy.exp(decay*j)*pos[idx]
@@ -369,7 +370,7 @@ for state in states:
         len(pos_poisson)
         len(pos_poisson_long)
         fatality_rate_poisson=[]
-        x_fit_poisson=[];y_fit_poisson=[];dates_fit_poisson=[];nday=10;day_fit=8;#day_fit=360;
+        x_fit_poisson=[];y_fit_poisson=[];dates_fit_poisson=[];nday=10;day_fit=120;#day_fit=360;
         if True:
             for i in range(nday,len(datesJHU)):
                 #print datesJHU[i],(dth[i]-dth[i-7]),pos_poisson[i-nday]
@@ -611,7 +612,7 @@ for state in states:
                 pos_out += pos[idx2]
                 pos_l_out += pos_l[idx2]
                 pos_h_out += pos_h[idx2]
-            if datesJHU[i].month==1 and datesJHU[i].day%7 == 1 and datesJHU[i].day > 22 or datesJHU[i].month==2 and datesJHU[i].day%7 == 5 or datesJHU[i].month==3 and datesJHU[i].day%7 == 5:
+            if datesJHU[i].month==6 and datesJHU[i].day%7 == 4 and datesJHU[i].day > 5 or datesJHU[i].month==7 and datesJHU[i].day%7 == 2:
                 count+=1
                 out2 = out+str(count)+' wk ahead cum death,'
                 date = str(datesJHU[i].year)+'-'
@@ -753,7 +754,7 @@ for state in states:
                 pos_out = 0
                 pos_l_out = 0
                 pos_h_out = 0
-            if datesJHU[i].month==11 and datesJHU[i].day%7 == 6 or datesJHU[i].month==12 and datesJHU[i].day%7 == 4 or datesJHU[i].month==1 and datesJHU[i].day%7 == 1 or datesJHU[i].month==2 and datesJHU[i].day%7 == 5 or datesJHU[i].month==3 and datesJHU[i].day%7 == 5:
+            if datesJHU[i].month==6 and datesJHU[i].day%7 == 4 or datesJHU[i].month==7 and datesJHU[i].day%7 == 2 :
                 pos_out = 0
                 pos_l_out = 0
                 pos_h_out = 0

@@ -1,9 +1,9 @@
 #!/bin/csh
 @ date = `date | awk '{print $3}'`
 @ date = 20
-@ month = 1
+@ month = 5
 @ enddate = 31
-@ endmonth = 3
+@ endmonth = 7
 @ year = 2022
 @ endyear = 2022
 while ( $year < $endyear || $month < $endmonth || $date <= $enddate )
